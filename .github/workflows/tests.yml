@@ -1,15 +1,15 @@
-name: API Tests Runner
+name: API Tests & Allure Report
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Скачиваем код из репозитория
+    - name: Скачиваем код
       uses: actions/checkout@v3
 
     - name: Устанавливаем Python
@@ -22,5 +22,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Запускаем тесты! 🚀
-      run: PYTHONPATH=. pytest -v
+    - name: Запускаем тесты со сбором Allure 🚀
+      run: PYTHONPATH=. pytest -v --alluredir=allure-results
+      continue-on-error: true
+
+    - name: Генерируем Allure-отчет 📊
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results
+        allure_history: allure-history
+
+    - name: Публикуем отчет на GitHub Pages 🌐
+      uses: peaceiris/actions-gh-pages@v3
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: allure-history
